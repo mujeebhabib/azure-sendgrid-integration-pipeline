@@ -1,0 +1,8 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "SQL_CONNECTION_STRING": "Driver={ODBC Driver 18 for SQL Server};Server=tcp:sql-integration-lab-server.database.windows.net,1433;Database=sqldb-integration-lab;Uid=sqladmin;Pwd=GoonnowADAM786$;Encrypt=yes;TrustServerCertificate=yes;Connection Timeout=30;"
+  }
+}

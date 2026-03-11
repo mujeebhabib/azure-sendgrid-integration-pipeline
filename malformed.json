@@ -1,0 +1,10 @@
+[
+  {
+    "event": "processed",
+    "email": "broken@example.com",
+    "timestamp": 1710143000,
+    "sg_event_id": "evt-bad",
+    "extra": { "nested": "ok" },
+    "bad_field": { "oops": 123   // missing closing brace
+  }
+]

@@ -1,0 +1,172 @@
+#######################################################################
+# 1. BASIC INGESTION — PROCESSED EVENT
+#######################################################################
+POST http://localhost:7071/api/receive_events
+Content-Type: application/json
+
+[
+  {
+    "event": "processed",
+    "email": "test@example.com",
+    "sg_event_id": "evt-001",
+    "timestamp": 1710140000
+  }
+]
+
+###
+
+
+#######################################################################
+# 2. BOUNCE EVENT
+#######################################################################
+POST http://localhost:7071/api/receive_events
+Content-Type: application/json
+
+[
+  {
+    "event": "bounce",
+    "email": "bounce@example.com",
+    "reason": "Mailbox full",
+    "status": "5.2.2",
+    "sg_event_id": "evt-002",
+    "timestamp": 1710141000
+  }
+]
+
+###
+
+
+#######################################################################
+# 3. SPAMREPORT EVENT
+#######################################################################
+POST http://localhost:7071/api/receive_events
+Content-Type: application/json
+
+[
+  {
+    "event": "spamreport",
+    "email": "user@example.com",
+    "sg_event_id": "evt-003",
+    "timestamp": 1710142000
+  }
+]
+
+###
+
+
+#######################################################################
+# 4. MALFORMED JSON — SHOULD GO TO DEAD‑LETTER
+# (This intentionally breaks JSON structure.)
+#######################################################################
+POST http://localhost:7071/api/receive_events
+Content-Type: application/json
+
+./malformed.json
+
+
+###
+
+
+#######################################################################
+# 5. SQL FAILURE SIMULATION — UNKNOWN EVENT TYPE
+# (Transformer marks as unknown; if downstream logic fails, it dead‑letters.)
+#######################################################################
+POST http://localhost:7071/api/receive_events
+Content-Type: application/json
+
+[
+  {
+    "event": "mystery_event_type",
+    "email": "weird@example.com",
+    "sg_event_id": "evt-005",
+    "timestamp": 1710143000
+  }
+]
+
+###
+
+
+#######################################################################
+# 6. MULTI‑EVENT BATCH — MIXED TYPES
+#######################################################################
+POST http://localhost:7071/api/receive_events
+Content-Type: application/json
+
+[
+  {
+    "event": "processed",
+    "email": "batch1@example.com",
+    "sg_event_id": "evt-006",
+    "timestamp": 1710144000
+  },
+  {
+    "event": "bounce",
+    "email": "batch2@example.com",
+    "reason": "User unknown",
+    "sg_event_id": "evt-007",
+    "timestamp": 1710144100
+  },
+  {
+    "event": "spamreport",
+    "email": "batch3@example.com",
+    "sg_event_id": "evt-008",
+    "timestamp": 1710144200
+  }
+]
+
+###
+
+
+#######################################################################
+# 7. DEAD‑LETTER REPROCESSING — MOVE FAILED EVENTS BACK TO STAGING
+#######################################################################
+POST http://localhost:7071/api/reprocess_dead_letters
+Content-Type: application/json
+
+{
+  "batch_size": 50
+}
+
+###
+
+### DEAD-LETTER TEST — Invalid timestamp
+POST http://localhost:7071/api/receive_events
+Content-Type: application/json
+
+[
+  {
+    "event": "processed",
+    "email": "broken@example.com",
+    "timestamp": "NOT_A_NUMBER",
+    "sg_event_id": "evt-dead-001"
+  }
+]
+
+### DEAD-LETTER TEST — Invalid event type
+POST http://localhost:7071/api/receive_events
+Content-Type: application/json
+
+[
+  {
+    "event": 12345,
+    "email": "weird@example.com",
+    "sg_event_id": "evt-dead-002",
+    "timestamp": 1710143000
+  }
+]
+
+#######################################################################
+# 8. METRICS CHECK — RUN IN SSMS / ADS
+#######################################################################
+# SELECT * FROM dbo.Metrics ORDER BY metric_name;
+#
+# Expected counters:
+#   events_ingested
+#   events_processed
+#   dead_letter_invalid_json
+#   dead_letter_processing_failures
+#   dead_letter_transform_failures
+#   dead_letter_reprocessed
+#   staging_fetch_failures
+#
+#######################################################################
